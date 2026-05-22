@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcard Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <section id="authSection" class="auth-wrap">
+    <div class="card">
+      <h1>Flashcard Generator</h1>
+      <p class="muted space-b-14">Sign up or log in to create and save decks.</p>
+      <form id="loginForm" novalidate>
+        <div class="grid">
+          <div>
+            <label for="authEmail">Email</label>
+            <input id="authEmail" type="email" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label for="authPassword">Password</label>
+            <input id="authPassword" type="password" placeholder="Minimum 6 characters" />
+          </div>
+        </div>
+        <div class="actions">
+          <button id="signupBtn" type="button" class="btn-primary">Sign Up</button>
+          <button id="magicLinkBtn" type="button" class="btn-soft">Magic Link</button>
+          <button id="loginBtn" type="button" class="btn-soft">Log In</button>
+        </div>
+      </form>
+      <div id="authStatus" class="status" role="alert" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <main id="appSection" class="container hidden">
+    <div class="topbar">
+      <div>
+        <h1>Welcome to your dashboard</h1>
+        <p id="userInfo" class="muted"></p>
+      </div>
+      <button id="logoutBtn" class="btn-danger">Log Out</button>
+    </div>
+
+    <div class="grid two">
+      <section class="card">
+        <h2>Create New Deck</h2>
+        <p class="muted space-b-10">Paste text or upload a PDF, then generate 15 cards with AI.</p>
+
+        <div class="space-b-10">
+          <label for="groqApiKey">Groq API Key (saved locally)</label>
+          <input id="groqApiKey" type="password" placeholder="gsk_..." />
+        </div>
+
+        <div class="space-b-10">
+          <label for="deckTitle">Deck title</label>
+          <input id="deckTitle" type="text" placeholder="e.g. Biology Chapter 3" />
+        </div>
+
+        <div class="space-b-10">
+          <label for="sourceText">Source text</label>
+          <textarea id="sourceText" placeholder="Paste notes, article text, lecture transcript..."></textarea>
+        </div>
+
+        <div class="space-b-10">
+          <label for="pdfInput">Or upload PDF</label>
+          <input id="pdfInput" type="file" accept=".pdf,application/pdf" />
+          <p id="pdfStatus" class="muted space-t-8 text-sm"></p>
+        </div>
+
+        <div class="actions">
+          <button id="generateBtn" class="btn-primary">Generate 15 Flashcards</button>
+          <button id="saveGroqBtn" class="btn-ghost">Save API Key</button>
+        </div>
+        <div id="generateStatus" class="status"></div>
+      </section>
+
+      <section class="card">
+        <h2>Saved Decks</h2>
+        <p class="muted">Open any deck to study again.</p>
+        <div id="decksContainer" class="deck-list"></div>
+      </section>
+    </div>
+
+    <section id="studySection" class="card hidden study-section">
+      <div class="study-head">
+        <div>
+          <h2 id="studyDeckTitle">Study Deck</h2>
+          <p id="studyMeta" class="muted"></p>
+        </div>
+        <div class="progress-pill" id="studyProgress">Card 1 / 1</div>
+      </div>
+
+      <div class="study-controls">
+        <button id="modeFlipBtn" class="btn-primary">Flip Mode</button>
+        <button id="modeQuizBtn" class="btn-soft">Quiz Mode</button>
+        <button id="weakModeBtn" class="btn-ghost">Focus on Weak Cards</button>
+        <button id="prevBtn" class="btn-ghost">Previous</button>
+        <button id="nextBtn" class="btn-ghost">Next</button>
+      </div>
+
+      <div id="flipModeView">
+        <div class="flip-stage">
+          <div id="flipCard" class="flip-card">
+            <div class="flip-face front">
+              <div class="flash-title">Question</div>
+              <div id="flipQuestion" class="flash-content"></div>
+              <div class="muted text-xs">Click to reveal answer</div>
+            </div>
+            <div class="flip-face back">
+              <div class="flash-title">Answer</div>
+              <div id="flipAnswer" class="flash-content"></div>
+              <div class="muted text-xs">Click to flip back</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="quizModeView" class="hidden">
+        <div class="quiz-wrap">
+          <div class="flash-title">Question</div>
+          <div id="quizQuestion" class="flash-content flash-content-unlimited"></div>
+          <div>
+            <label for="quizInput">Your answer</label>
+            <input id="quizInput" type="text" placeholder="Type your answer..." />
+          </div>
+          <div class="actions">
+            <button id="checkAnswerBtn" class="btn-primary">Check Answer</button>
+            <button id="showAnswerBtn" class="btn-soft">Show Correct Answer</button>
+          </div>
+          <div id="quizFeedback" class="status"></div>
+          <div id="quizCorrectAnswer" class="muted"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    document.getElementById("loginForm")?.addEventListener("submit", function (e) {
+      e.preventDefault();
+    });
+  </script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
