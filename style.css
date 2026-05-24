@@ -608,3 +608,15 @@ button:disabled {
   .actions > button, .study-controls > button { width: 100%; }
   .auth-wrap .card { padding: 28px; }
 }
+
+.auth-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

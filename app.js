@@ -2,7 +2,7 @@ const SUPABASE_URL = "https://rzytgxadqhrccqydvtes.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_okYCEha7aBddt5wEbJo5bQ_mz-WJ4CE";
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
-const LOCAL_GROQ_KEY = "flashcard_groq_api_key";
+const LOCAL_GROQ_KEY = "KIX_groq_api_key";
 
 let clientsupabase = null;
 let pdfjsLibPromise = null;

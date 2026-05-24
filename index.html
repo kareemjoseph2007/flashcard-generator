@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flashcard Generator</title>
+  <title>Kix</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,7 +12,32 @@
 <body>
   <section id="authSection" class="auth-wrap">
     <div class="card">
-      <h1>Flashcard Generator</h1>
+      <div class="auth-logo">
+        <svg width="120" height="40" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#FF6584"/>
+            </linearGradient>
+            <linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#A8A3FF"/>
+              <stop offset="60%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#FF6584"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="12" width="44" height="56" rx="10" fill="#1A1A2E" stroke="rgba(108,99,255,0.2)" stroke-width="1"/>
+          <rect x="5" y="17" width="28" height="20" rx="4" fill="#21213A" stroke="rgba(108,99,255,0.3)" stroke-width="1"/>
+          <rect x="5" y="22" width="28" height="5" fill="url(#ng)" opacity="0.8"/>
+          <g transform="rotate(-6, 27, 47)">
+            <rect x="13" y="38" width="28" height="20" rx="4" fill="#2A2A4A" stroke="rgba(108,99,255,0.5)" stroke-width="1"/>
+            <rect x="13" y="43" width="28" height="5" fill="url(#ng)"/>
+            <rect x="17" y="50" width="8" height="6" rx="1.5" fill="none" stroke="url(#ng)" stroke-width="0.8"/>
+            <line x1="17" y1="52.5" x2="25" y2="52.5" stroke="url(#ng)" stroke-width="0.6"/>
+            <line x1="21" y1="50" x2="21" y2="56" stroke="url(#ng)" stroke-width="0.6"/>
+          </g>
+          <text x="55" y="56" font-family="Syne, sans-serif" font-weight="800" font-size="38" letter-spacing="-1" fill="url(#tg)">kix</text>
+        </svg>
+      </div>
       <p class="muted space-b-14">Sign up or log in to create and save decks.</p>
       <form id="loginForm" novalidate>
         <div class="grid">
@@ -37,8 +62,31 @@
 
   <main id="appSection" class="container hidden">
     <div class="topbar">
-      <div>
-        <h1>Welcome to your dashboard</h1>
+      <div class="topbar-brand">
+        <svg width="96" height="32" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ng2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#FF6584"/>
+            </linearGradient>
+            <linearGradient id="tg2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#A8A3FF"/>
+              <stop offset="60%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#FF6584"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="12" width="44" height="56" rx="10" fill="#1A1A2E" stroke="rgba(108,99,255,0.2)" stroke-width="1"/>
+          <rect x="5" y="17" width="28" height="20" rx="4" fill="#21213A" stroke="rgba(108,99,255,0.3)" stroke-width="1"/>
+          <rect x="5" y="22" width="28" height="5" fill="url(#ng2)" opacity="0.8"/>
+          <g transform="rotate(-6, 27, 47)">
+            <rect x="13" y="38" width="28" height="20" rx="4" fill="#2A2A4A" stroke="rgba(108,99,255,0.5)" stroke-width="1"/>
+            <rect x="13" y="43" width="28" height="5" fill="url(#ng2)"/>
+            <rect x="17" y="50" width="8" height="6" rx="1.5" fill="none" stroke="url(#ng2)" stroke-width="0.8"/>
+            <line x1="17" y1="52.5" x2="25" y2="52.5" stroke="url(#ng2)" stroke-width="0.6"/>
+            <line x1="21" y1="50" x2="21" y2="56" stroke="url(#ng2)" stroke-width="0.6"/>
+          </g>
+          <text x="55" y="56" font-family="Syne, sans-serif" font-weight="800" font-size="38" letter-spacing="-1" fill="url(#tg2)">kix</text>
+        </svg>
         <p id="userInfo" class="muted"></p>
       </div>
       <button id="logoutBtn" class="btn-danger">Log Out</button>
