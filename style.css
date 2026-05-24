@@ -620,3 +620,27 @@ button:disabled {
   align-items: center;
   gap: 12px;
 }
+
+.limit-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; margin-top: 6px; width: 200px; }
+.limit-fill { height: 100%; border-radius: 99px; transition: width 0.5s ease, background 0.3s ease; }
+#deckLimitBar { display: flex; flex-direction: column; gap: 4px; }
+#deckLimitText { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty-state p { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.empty-state span { font-size: 0.85rem; }
+
+@media (max-width: 600px) {
+  .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .study-controls { gap: 6px; }
+  .study-controls button { flex: 1 1 calc(50% - 6px); }
+  .flip-stage { min-height: 260px; }
+  .flip-card { min-height: 260px; }
+  .flip-face { padding: 20px; }
+  #flipQuestion, #quizQuestion { font-size: 1.1rem; }
+  .deck-list { grid-template-columns: 1fr; }
+  .grid.two { grid-template-columns: 1fr; }
+  .card { padding: 18px; }
+  .auth-wrap .card { padding: 24px; }
+}

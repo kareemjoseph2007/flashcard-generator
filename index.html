@@ -88,6 +88,10 @@
           <text x="55" y="56" font-family="Syne, sans-serif" font-weight="800" font-size="38" letter-spacing="-1" fill="url(#tg2)">kix</text>
         </svg>
         <p id="userInfo" class="muted"></p>
+        <div id="deckLimitBar">
+          <span id="deckLimitText">0 of 10 free decks used</span>
+          <div class="limit-track"><div id="deckLimitFill" class="limit-fill"></div></div>
+        </div>
       </div>
       <button id="logoutBtn" class="btn-danger">Log Out</button>
     </div>
@@ -96,11 +100,6 @@
       <section class="card">
         <h2>Create New Deck</h2>
         <p class="muted space-b-10">Paste text or upload a PDF, then generate 15 cards with AI.</p>
-
-        <div class="space-b-10">
-          <label for="groqApiKey">Groq API Key (saved locally)</label>
-          <input id="groqApiKey" type="password" placeholder="gsk_..." />
-        </div>
 
         <div class="space-b-10">
           <label for="deckTitle">Deck title</label>
@@ -120,7 +119,6 @@
 
         <div class="actions">
           <button id="generateBtn" class="btn-primary">Generate 15 Flashcards</button>
-          <button id="saveGroqBtn" class="btn-ghost">Save API Key</button>
         </div>
         <div id="generateStatus" class="status"></div>
       </section>

@@ -1,8 +1,5 @@
 const SUPABASE_URL = "https://rzytgxadqhrccqydvtes.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_okYCEha7aBddt5wEbJo5bQ_mz-WJ4CE";
-const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
-const LOCAL_GROQ_KEY = "KIX_groq_api_key";
 
 let clientsupabase = null;
 let pdfjsLibPromise = null;
@@ -22,8 +19,6 @@ function cacheUi() {
   ui.loginBtn = $("loginBtn");
   ui.logoutBtn = $("logoutBtn");
   ui.userInfo = $("userInfo");
-  ui.groqApiKey = $("groqApiKey");
-  ui.saveGroqBtn = $("saveGroqBtn");
   ui.sourceText = $("sourceText");
   ui.pdfInput = $("pdfInput");
   ui.pdfStatus = $("pdfStatus");
@@ -176,73 +171,6 @@ async function getPdfJsLib() {
   return pdfjsLibPromise;
 }
 
-async function generateFlashcardsFromText(rawText, groqKey) {
-  const source = rawText.trim().slice(0, 30000);
-  const prompt = `
-Create exactly 15 study flashcards from the text below.
-Return ONLY valid JSON with this exact shape:
-[
-  { "question": "string", "answer": "string" }
-]
-
-Rules:
-- Exactly 15 objects
-- Clear concise question and answer
-- No extra keys
-- No markdown, no explanation, only JSON
-
-Text:
-${source}
-`;
-
-  const response = await fetch(GROQ_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${groqKey}`
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      temperature: 0.4,
-      messages: [
-        { role: "system", content: "You are a precise flashcard generation assistant." },
-        { role: "user", content: prompt }
-      ]
-    })
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Groq API error: ${response.status} ${errText}`);
-  }
-
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) throw new Error("No content returned from Groq.");
-
-  let parsed;
-  try {
-    parsed = JSON.parse(stripJsonFence(content));
-  } catch (error) {
-    throw new Error("Could not parse AI response as valid JSON.");
-  }
-
-  if (!Array.isArray(parsed) || parsed.length !== 15) {
-    throw new Error("AI response must be an array of exactly 15 flashcards.");
-  }
-
-  const cards = parsed.map((item, idx) => {
-    const question = String(item?.question || "").trim();
-    const answer = String(item?.answer || "").trim();
-    if (!question || !answer) {
-      throw new Error(`Flashcard ${idx + 1} is missing question or answer.`);
-    }
-    return { question, answer };
-  });
-
-  return cards;
-}
-
 async function saveDeckToSupabase(title, cards, sourceText) {
   const user = state.user;
   if (!user) throw new Error("You must be logged in.");
@@ -277,13 +205,24 @@ async function loadUserDecks() {
   }
 
   state.decks = data || [];
+  const used = state.decks.length;
+  const limitText = document.getElementById("deckLimitText");
+  const limitFill = document.getElementById("deckLimitFill");
+  if (limitText) limitText.textContent = `${used} of 10 free decks used`;
+  if (limitFill) limitFill.style.width = `${Math.min((used / 10) * 100, 100)}%`;
+  if (limitFill) limitFill.style.background = used >= 8 ? "#FF4757" : used >= 5 ? "#FFA502" : "#6C63FF";
   renderDecks();
 }
 
 function renderDecks() {
   ui.decksContainer.innerHTML = "";
   if (!state.decks.length) {
-    ui.decksContainer.innerHTML = "<p class='muted'>No decks yet. Generate your first deck.</p>";
+    ui.decksContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <p>No decks yet</p>
+        <span>Generate your first deck to get started</span>
+      </div>`;
     return;
   }
 
@@ -368,6 +307,14 @@ function renderStudyCard() {
     ui.flipAnswer.textContent = "";
     ui.quizQuestion.textContent = "No cards to show.";
     ui.studyProgress.textContent = "0 / 0";
+    return;
+  }
+
+  if (state.currentIndex >= active.length && active.length > 0) {
+    ui.flipQuestion.textContent = "🎉 You've completed this deck!";
+    ui.flipAnswer.textContent = "";
+    ui.studyMeta.textContent = `Weak cards: ${state.weakIndexes.size}`;
+    ui.studyProgress.textContent = `${active.length} / ${active.length}`;
     return;
   }
 
@@ -493,6 +440,26 @@ async function handleLogin(event) {
   }
 }
 
+async function generateFlashcards(sourceText) {
+  const response = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sourceText, userId: state.user.id })
+  });
+  if (response.status === 403) {
+    const data = await response.json();
+    if (data.error === "limit_reached") {
+      throw new Error("You've used all 10 free decks. Upgrade to continue generating.");
+    }
+  }
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error || "Failed to generate flashcards.");
+  }
+  const data = await response.json();
+  return data.cards;
+}
+
 function wireEventHandlers() {
   console.log("magicLinkBtn found:", $("magicLinkBtn"));
   on($("magicLinkBtn"), "click", handleMagicLink);
@@ -508,16 +475,6 @@ function wireEventHandlers() {
   state.currentDeck = null;
   ui.studySection.classList.add("hidden");
     refreshAuthUI();
-  });
-
-  on(ui.saveGroqBtn, "click", () => {
-  const key = ui.groqApiKey.value.trim();
-  if (!key) {
-    setStatus(ui.generateStatus, "Enter a Groq API key first.", "error");
-    return;
-  }
-    localStorage.setItem(LOCAL_GROQ_KEY, key);
-    setStatus(ui.generateStatus, "Groq API key saved locally.", "success");
   });
 
   on(ui.pdfInput, "change", async (event) => {
@@ -543,14 +500,9 @@ function wireEventHandlers() {
 
   on(ui.generateBtn, "click", async () => {
   setStatus(ui.generateStatus, "");
-  const groqKey = ui.groqApiKey.value.trim() || localStorage.getItem(LOCAL_GROQ_KEY) || "";
   const typedText = ui.sourceText.value.trim();
   const source = typedText || state.extractedPdfText;
 
-  if (!groqKey) {
-    setStatus(ui.generateStatus, "Enter and save your Groq API key.", "error");
-    return;
-  }
   if (!source || source.length < 80) {
     setStatus(ui.generateStatus, "Please provide enough text (at least ~80 characters) or upload a PDF.", "error");
     return;
@@ -560,7 +512,7 @@ function wireEventHandlers() {
   setStatus(ui.generateStatus, "Generating flashcards...", "");
 
   try {
-    const cards = await generateFlashcardsFromText(source, groqKey);
+    const cards = await generateFlashcards(source);
     const title = ui.deckTitle.value.trim() || `Generated Deck ${new Date().toLocaleDateString()}`;
     await saveDeckToSupabase(title, cards, source.slice(0, 50000));
     setStatus(ui.generateStatus, "Deck generated and saved successfully.", "success");
@@ -638,9 +590,6 @@ async function initAuth() {
     applyAuthState(null);
     return;
   }
-
-  const savedKey = localStorage.getItem(LOCAL_GROQ_KEY);
-  if (savedKey && ui.groqApiKey) ui.groqApiKey.value = savedKey;
 
   const { data, error } = await client.auth.getSession();
   if (error) {
