@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
 <body>
   <section id="authSection" class="auth-wrap">
@@ -96,38 +97,75 @@
       <button id="logoutBtn" class="btn-danger">Log Out</button>
     </div>
 
-    <div class="grid two">
-      <section class="card">
-        <h2>Create New Deck</h2>
-        <p class="muted space-b-10">Paste text or upload a PDF, then generate 15 cards with AI.</p>
+    <div id="progressBar" class="progress-dashboard hidden">
+      <div class="progress-stat">
+        <span id="statDecks">0</span>
+        <label>Decks Studied</label>
+      </div>
+      <div class="progress-stat">
+        <span id="statMastered">0</span>
+        <label>Cards Mastered</label>
+      </div>
+      <div class="progress-stat">
+        <span id="statWeak">0</span>
+        <label>Weak Cards</label>
+      </div>
+      <div class="progress-stat">
+        <span id="statAvgScore">0%</span>
+        <label>Avg Score</label>
+      </div>
+    </div>
 
-        <div class="space-b-10">
-          <label for="deckTitle">Deck title</label>
-          <input id="deckTitle" type="text" placeholder="e.g. Biology Chapter 3" />
-        </div>
+    <div class="dashboard-layout">
+     
+      <!-- LEFT: Main generation panel (bigger) -->
+      <div class="dashboard-main">
+        <section class="card">
+          <h2>Create New Deck</h2>
+          <p class="muted space-b-10">Paste text or upload a PDF, then generate 15 cards with AI.</p>
 
-        <div class="space-b-10">
-          <label for="sourceText">Source text</label>
-          <textarea id="sourceText" placeholder="Paste notes, article text, lecture transcript..."></textarea>
-        </div>
+          <div class="space-b-10">
+            <label for="deckTitle">Deck title</label>
+            <input id="deckTitle" type="text" placeholder="e.g. Biology Chapter 3" />
+          </div>
 
-        <div class="space-b-10">
-          <label for="pdfInput">Or upload PDF</label>
-          <input id="pdfInput" type="file" accept=".pdf,application/pdf" />
-          <p id="pdfStatus" class="muted space-t-8 text-sm"></p>
-        </div>
+          <div class="space-b-10">
+            <label for="sourceText">Source text</label>
+            <textarea id="sourceText" placeholder="Paste notes, article text, lecture transcript..."></textarea>
+            <p id="charCount" class="muted text-sm space-t-8">0 / 30,000 characters</p>
+          </div>
 
-        <div class="actions">
-          <button id="generateBtn" class="btn-primary">Generate 15 Flashcards</button>
-        </div>
-        <div id="generateStatus" class="status"></div>
-      </section>
+          <div class="space-b-10">
+            <label for="pdfInput">Or upload PDF</label>
+            <input id="pdfInput" type="file" accept=".pdf,application/pdf" />
+            <p id="pdfStatus" class="muted space-t-8 text-sm"></p>
+          </div>
 
-      <section class="card">
-        <h2>Saved Decks</h2>
-        <p class="muted">Open any deck to study again.</p>
-        <div id="decksContainer" class="deck-list"></div>
-      </section>
+          <div class="actions">
+            <button id="generateBtn" class="btn-primary">Generate Flashcards</button>
+          </div>
+          <div id="generateStatus" class="status"></div>
+        </section>
+      </div>
+
+      <!-- RIGHT: Sidebar (smaller) -->
+      <div class="dashboard-sidebar">
+       
+        <!-- Library decks -->
+        <section class="card sidebar-card">
+          <h2>Deck Library</h2>
+          <p class="muted space-b-10">Ready-made IELTS & SAT decks.</p>
+          <div id="libraryContainer" class="sidebar-deck-list"></div>
+        </section>
+
+        <!-- Saved decks -->
+        <section class="card sidebar-card">
+          <h2>Your Decks</h2>
+          <p class="muted space-b-10">Your generated decks.</p>
+          <div id="decksContainer" class="sidebar-deck-list"></div>
+        </section>
+
+      </div>
     </div>
 
     <section id="studySection" class="card hidden study-section">
@@ -142,9 +180,16 @@
       <div class="study-controls">
         <button id="modeFlipBtn" class="btn-primary">Flip Mode</button>
         <button id="modeQuizBtn" class="btn-soft">Quiz Mode</button>
+        <button id="modeMcqBtn" class="btn-soft">MCQ Mode</button>
         <button id="weakModeBtn" class="btn-ghost">Focus on Weak Cards</button>
+        <button id="shuffleBtn" class="btn-ghost">Shuffle</button>
         <button id="prevBtn" class="btn-ghost">Previous</button>
         <button id="nextBtn" class="btn-ghost">Next</button>
+      </div>
+
+      <div id="keyboardHint" class="keyboard-hint">
+        <span>← → Navigate</span>
+        <span>Space Flip card</span>
       </div>
 
       <div id="flipModeView">
@@ -180,6 +225,16 @@
           <div id="quizCorrectAnswer" class="muted"></div>
         </div>
       </div>
+
+      <div id="mcqModeView" class="hidden">
+        <div class="quiz-wrap">
+          <div class="flash-title">Question</div>
+          <div id="mcqQuestion" class="flash-content flash-content-unlimited"></div>
+          <div id="mcqOptions" class="mcq-options"></div>
+          <div id="mcqFeedback" class="status"></div>
+          <div id="mcqCorrectAnswer" class="muted"></div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -190,5 +245,20 @@
     });
   </script>
   <script src="./app.js" defer></script>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo">Flashcard Generator</span>
+        <p>AI-powered flashcards for IELTS & SAT students.</p>
+      </div>
+      <div class="footer-links">
+        <span>Built with ❤️ for students</span>
+      </div>
+      <div class="footer-right">
+        <span>© 2026 Flashcard Generator</span>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>

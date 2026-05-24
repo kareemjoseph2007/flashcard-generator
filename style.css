@@ -496,23 +496,48 @@ button:disabled {
 .flip-stage {
   width: min(640px, 100%);
   margin: 0 auto;
-  min-height: 320px;
+  height: 320px;
   perspective: 1400px;
+  animation: float 5s ease-in-out infinite;
 }
+
+.flip-stage:hover { animation-play-state: paused; }
 
 .flip-card {
   width: 100%;
-  min-height: 320px;
+  height: 320px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  animation: float 5s ease-in-out infinite;
 }
 
-.flip-card:hover { animation-play-state: paused; }
-
 .flip-card.is-flipped { transform: rotateY(180deg); }
+
+@keyframes slideOutLeft {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(-40px) scale(0.95); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(40px) scale(0.95); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.flip-card.slide-out-left  { animation: slideOutLeft  0.18s ease forwards; }
+.flip-card.slide-in-right  { animation: slideInRight  0.18s ease forwards; }
+.flip-card.slide-out-right { animation: slideOutRight 0.18s ease forwards; }
+.flip-card.slide-in-left   { animation: slideInLeft   0.18s ease forwards; }
 
 .flip-face {
   position: absolute;
@@ -565,6 +590,57 @@ button:disabled {
 }
 
 .flash-content-unlimited { max-height: none; }
+
+.mcq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.mcq-option {
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  transition: all 0.2s ease;
+  color: var(--text);
+}
+
+.mcq-option:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(108,99,255,0.08);
+  transform: translateX(4px);
+}
+
+.mcq-option.correct {
+  border-color: var(--success);
+  background: rgba(0,200,150,0.1);
+  color: var(--success);
+}
+
+.mcq-option.wrong {
+  border-color: var(--error);
+  background: rgba(255,71,87,0.1);
+  color: var(--error);
+}
+
+.mcq-option:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mcq-loading {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 20px;
+  animation: pulse-glow 1.5s ease infinite;
+}
 
 /* ── QUIZ ── */
 
@@ -631,16 +707,192 @@ button:disabled {
 .empty-state p { font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .empty-state span { font-size: 0.85rem; }
 
+.keyboard-hint {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.keyboard-hint span {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.progress-dashboard {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.progress-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 120px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.progress-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.progress-stat span {
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: "Syne", sans-serif;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.progress-stat label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 80px;
+}
+
+.sidebar-card {
+  padding: 20px;
+}
+
+.sidebar-card h2 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.sidebar-deck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.sidebar-deck-list .deck-item {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.sidebar-deck-list .deck-item h3 {
+  font-size: 0.88rem;
+}
+
+.sidebar-deck-list .deck-item .meta {
+  font-size: 0.78rem;
+}
+
+.sidebar-deck-list .deck-item .btn-primary {
+  font-size: 0.82rem;
+  padding: 8px 14px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-sidebar {
+    position: static;
+  }
+}
+
 @media (max-width: 600px) {
   .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
   .study-controls { gap: 6px; }
   .study-controls button { flex: 1 1 calc(50% - 6px); }
-  .flip-stage { min-height: 260px; }
-  .flip-card { min-height: 260px; }
+  .flip-stage { height: 260px; }
+  .flip-card { height: 260px; }
   .flip-face { padding: 20px; }
   #flipQuestion, #quizQuestion { font-size: 1.1rem; }
   .deck-list { grid-template-columns: 1fr; }
   .grid.two { grid-template-columns: 1fr; }
   .card { padding: 18px; }
   .auth-wrap .card { padding: 24px; }
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 0;
+  margin-top: 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-inner {
+  width: min(1200px, 94vw);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-logo {
+  font-family: "Syne", sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.footer-brand p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.footer-links span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.footer-right span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
