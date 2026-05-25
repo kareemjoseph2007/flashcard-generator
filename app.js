@@ -54,6 +54,9 @@ function cacheUi() {
   ui.mcqOptions = $("mcqOptions");
   ui.mcqFeedback = $("mcqFeedback");
   ui.mcqCorrectAnswer = $("mcqCorrectAnswer");
+  ui.timerInput = $("timerInput");
+  ui.timerToggleBtn = $("timerToggleBtn");
+  ui.timerDisplay = $("timerDisplay");
 }
 
 function authUserFromData(data) {
@@ -182,7 +185,11 @@ const state = {
   currentIndex: 0,
   weakOnly: false,
   weakIndexes: new Set(),
-  shuffledIndexes: null
+  shuffledIndexes: null,
+  mcqCache: {},
+  timerActive: false,
+  timerSeconds: 0,
+  timerInterval: null
 };
 
 function on(el, eventName, handler) {
@@ -600,14 +607,74 @@ function shuffleDeck() {
   renderStudyCard();
 }
 
+function updateStreak() {
+  let streak = { lastStudiedDate: null, currentStreak: 0, longestStreak: 0 };
+  try {
+    const saved = localStorage.getItem("kix_streak");
+    if (saved) streak = JSON.parse(saved);
+  } catch {
+    // use default
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (streak.lastStudiedDate === today) return;
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+  if (streak.lastStudiedDate === yesterdayStr) {
+    streak.currentStreak += 1;
+  } else {
+    streak.currentStreak = 1;
+  }
+
+  if (streak.currentStreak > streak.longestStreak) {
+    streak.longestStreak = streak.currentStreak;
+  }
+
+  streak.lastStudiedDate = today;
+  localStorage.setItem("kix_streak", JSON.stringify(streak));
+  renderStreak();
+}
+
+function renderStreak() {
+  const el = document.getElementById("streakDisplay");
+  if (!el) return;
+
+  let streak = { lastStudiedDate: null, currentStreak: 0, longestStreak: 0 };
+  try {
+    const saved = localStorage.getItem("kix_streak");
+    if (saved) streak = JSON.parse(saved);
+  } catch {
+    // use default
+  }
+
+  const { currentStreak, longestStreak } = streak;
+
+  if (currentStreak === 0) {
+    el.textContent = "No streak yet";
+    return;
+  }
+
+  let text = currentStreak === 1 ? "🔥 1 day streak" : `🔥 ${currentStreak} day streak`;
+  if (currentStreak === longestStreak && longestStreak > 1) {
+    text += " · Personal best!";
+  }
+  el.textContent = text;
+}
+
 function startStudy(deck) {
+  stopTimer();
   state.currentDeck = deck;
   state.currentIndex = 0;
   state.currentMode = "flip";
   state.weakOnly = false;
   state.weakIndexes = new Set();
   state.shuffledIndexes = null;
+  state.mcqCache = {};
   ui.studyDeckTitle.textContent = deck.title || "Study Deck";
+  updateStreak();
   ui.studySection.classList.remove("hidden");
   const isTouch = window.matchMedia("(pointer: coarse)").matches;
   const hint = document.getElementById("keyboardHint");
@@ -621,6 +688,61 @@ function startStudy(deck) {
   setTimeout(() => {
     ui.studySection.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 100);
+}
+
+function startTimer() {
+  const seconds = parseInt(ui.timerInput?.value, 10);
+  if (!seconds || seconds < 5) {
+    alert("Please enter at least 5 seconds");
+    return;
+  }
+
+  state.timerSeconds = seconds;
+  state.timerActive = true;
+  if (ui.timerToggleBtn) ui.timerToggleBtn.textContent = "Stop Timer";
+  ui.timerDisplay?.classList.remove("hidden");
+  clearInterval(state.timerInterval);
+  if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
+
+  state.timerInterval = setInterval(() => {
+    state.timerSeconds -= 1;
+    if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
+    if (state.timerSeconds <= 5) {
+      ui.timerDisplay?.classList.add("warning");
+    }
+    if (state.timerSeconds <= 0) {
+      stopTimer();
+      moveCard(1);
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+  state.timerActive = false;
+  state.timerInterval = null;
+  ui.timerDisplay?.classList.add("hidden");
+  ui.timerDisplay?.classList.remove("warning");
+  if (ui.timerToggleBtn) ui.timerToggleBtn.textContent = "Start Timer";
+}
+
+function resetTimer() {
+  if (!state.timerActive) return;
+  clearInterval(state.timerInterval);
+  state.timerSeconds = parseInt(ui.timerInput?.value, 10);
+  if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
+  ui.timerDisplay?.classList.remove("warning");
+  state.timerInterval = setInterval(() => {
+    state.timerSeconds -= 1;
+    if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
+    if (state.timerSeconds <= 5) {
+      ui.timerDisplay?.classList.add("warning");
+    }
+    if (state.timerSeconds <= 0) {
+      stopTimer();
+      moveCard(1);
+    }
+  }, 1000);
 }
 
 function switchMode(mode) {
@@ -654,17 +776,26 @@ function moveCard(step) {
   const inClass  = step > 0 ? "slide-in-right" : "slide-in-left";
 
   ui.flipCard.classList.add(outClass);
+  if (state.currentMode === "mcq") ui.mcqModeView?.classList.add(outClass);
+  if (state.currentMode === "quiz") ui.quizModeView?.classList.add(outClass);
 
   setTimeout(() => {
     ui.flipCard.classList.remove(outClass);
+    if (state.currentMode === "mcq") ui.mcqModeView?.classList.remove(outClass);
+    if (state.currentMode === "quiz") ui.quizModeView?.classList.remove(outClass);
     state.currentIndex = (state.currentIndex + step + active.length) % active.length;
     ui.quizFeedback.textContent = "";
     ui.quizCorrectAnswer.textContent = "";
     ui.quizInput.value = "";
     renderStudyCard();
     ui.flipCard.classList.add(inClass);
+    if (state.currentMode === "mcq") ui.mcqModeView?.classList.add(inClass);
+    if (state.currentMode === "quiz") ui.quizModeView?.classList.add(inClass);
     setTimeout(() => {
       ui.flipCard.classList.remove(inClass);
+      if (state.currentMode === "mcq") ui.mcqModeView?.classList.remove(inClass);
+      if (state.currentMode === "quiz") ui.quizModeView?.classList.remove(inClass);
+      resetTimer();
     }, 180);
   }, 180);
 }
@@ -710,6 +841,10 @@ function renderStudyCard() {
     ui.mcqQuestion.textContent = card.question;
     loadMcqOptions(card);
   }
+
+  const nextIndex = (state.currentIndex + 1) % active.length;
+  const nextCard = state.currentDeck.cards[active[nextIndex]];
+  preloadMcqOptions(nextCard, nextIndex);
 }
 
 async function refreshAuthUI(sessionOverride) {
@@ -741,6 +876,7 @@ function applyAuthState(user) {
     loadUserDecks();
     renderLibrary();
     loadProgress();
+    renderStreak();
     return;
   }
 
@@ -930,11 +1066,8 @@ function renderLibrary() {
   });
 }
 
-async function loadMcqOptions(card) {
-  if (!ui.mcqOptions) return;
-  ui.mcqOptions.innerHTML = "<div class='mcq-loading'>Generating options...</div>";
-  ui.mcqFeedback.textContent = "";
-  ui.mcqCorrectAnswer.textContent = "";
+async function preloadMcqOptions(card, index) {
+  if (state.mcqCache[index]) return;
 
   const prompt = `Given this flashcard:
 Question: ${card.question}
@@ -966,6 +1099,52 @@ No explanation, no markdown, only JSON.`;
     wrongOptions = getClientFallbackWrongOptions(card);
   }
 
+  state.mcqCache[index] = wrongOptions;
+}
+
+async function loadMcqOptions(card) {
+  if (!ui.mcqOptions) return;
+  ui.mcqFeedback.textContent = "";
+  ui.mcqCorrectAnswer.textContent = "";
+
+  if (state.mcqCache[state.currentIndex]) {
+    renderMcqOptions(card, state.mcqCache[state.currentIndex]);
+    return;
+  }
+
+  ui.mcqOptions.innerHTML = "<div class='mcq-loading'>Generating options...</div>";
+
+  const prompt = `Given this flashcard:
+Question: ${card.question}
+Correct Answer: ${card.answer}
+
+Generate exactly 3 wrong but plausible answer options for a multiple choice question.
+Return ONLY a JSON array of 3 strings like this:
+["wrong answer 1", "wrong answer 2", "wrong answer 3"]
+No explanation, no markdown, only JSON.`;
+
+  let wrongOptions = null;
+  try {
+    const response = await fetch("/api/generate-mcq", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data.options) && data.options.length === 3) {
+        wrongOptions = data.options.map(String);
+      }
+    }
+  } catch {
+    wrongOptions = null;
+  }
+
+  if (!wrongOptions) {
+    wrongOptions = getClientFallbackWrongOptions(card);
+  }
+
+  state.mcqCache[state.currentIndex] = wrongOptions;
   renderMcqOptions(card, wrongOptions);
 }
 
@@ -1113,6 +1292,13 @@ function wireEventHandlers() {
   on(ui.shuffleBtn, "click", shuffleDeck);
   on(ui.prevBtn, "click", () => moveCard(-1));
   on(ui.nextBtn, "click", () => moveCard(1));
+  on($("timerToggleBtn"), "click", () => {
+    if (state.timerActive) {
+      stopTimer();
+    } else {
+      startTimer();
+    }
+  });
   on(ui.flipCard, "click", () => {
     ui.flipCard.classList.toggle("is-flipped");
   });

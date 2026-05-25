@@ -93,6 +93,7 @@
           <span id="deckLimitText">0 of 10 free decks used</span>
           <div class="limit-track"><div id="deckLimitFill" class="limit-fill"></div></div>
         </div>
+        <div id="streakDisplay" class="streak-display"></div>
       </div>
       <button id="logoutBtn" class="btn-danger">Log Out</button>
     </div>
@@ -185,7 +186,13 @@
         <button id="shuffleBtn" class="btn-ghost">Shuffle</button>
         <button id="prevBtn" class="btn-ghost">Previous</button>
         <button id="nextBtn" class="btn-ghost">Next</button>
+        <div class="timer-controls">
+          <input id="timerInput" type="number" min="5" max="300" placeholder="Sec" />
+          <button id="timerToggleBtn" class="btn-soft">Start Timer</button>
+        </div>
       </div>
+
+      <div id="timerDisplay" class="timer-display hidden"></div>
 
       <div id="keyboardHint" class="keyboard-hint">
         <span>← → Navigate</span>
