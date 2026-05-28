@@ -189,7 +189,8 @@ const state = {
   mcqCache: {},
   timerActive: false,
   timerSeconds: 0,
-  timerInterval: null
+  timerInterval: null,
+  timerDuration: 0
 };
 
 function on(el, eventName, handler) {
@@ -674,6 +675,8 @@ function startStudy(deck) {
   state.shuffledIndexes = null;
   state.mcqCache = {};
   ui.studyDeckTitle.textContent = deck.title || "Study Deck";
+  const fill = document.getElementById("deckProgressFill");
+  if (fill) fill.style.width = "0%";
   updateStreak();
   ui.studySection.classList.remove("hidden");
   const isTouch = window.matchMedia("(pointer: coarse)").matches;
@@ -696,14 +699,21 @@ function startTimer() {
     alert("Please enter at least 5 seconds");
     return;
   }
-
-  state.timerSeconds = seconds;
+  state.timerDuration = seconds;
   state.timerActive = true;
   if (ui.timerToggleBtn) ui.timerToggleBtn.textContent = "Stop Timer";
+  if (ui.timerInput) ui.timerInput.disabled = true;
   ui.timerDisplay?.classList.remove("hidden");
-  clearInterval(state.timerInterval);
-  if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
+  const timerLabel = document.getElementById("timerLabel");
+  if (timerLabel) timerLabel.textContent = "seconds per card";
+  runCardTimer();
+}
 
+function runCardTimer() {
+  clearInterval(state.timerInterval);
+  state.timerSeconds = state.timerDuration;
+  if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
+  ui.timerDisplay?.classList.remove("warning");
   state.timerInterval = setInterval(() => {
     state.timerSeconds -= 1;
     if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
@@ -711,7 +721,7 @@ function startTimer() {
       ui.timerDisplay?.classList.add("warning");
     }
     if (state.timerSeconds <= 0) {
-      stopTimer();
+      clearInterval(state.timerInterval);
       moveCard(1);
     }
   }, 1000);
@@ -721,28 +731,19 @@ function stopTimer() {
   clearInterval(state.timerInterval);
   state.timerActive = false;
   state.timerInterval = null;
+  state.timerDuration = 0;
+  state.timerSeconds = 0;
   ui.timerDisplay?.classList.add("hidden");
   ui.timerDisplay?.classList.remove("warning");
   if (ui.timerToggleBtn) ui.timerToggleBtn.textContent = "Start Timer";
+  if (ui.timerInput) ui.timerInput.disabled = false;
+  const timerLabel = document.getElementById("timerLabel");
+  if (timerLabel) timerLabel.textContent = "";
 }
 
 function resetTimer() {
   if (!state.timerActive) return;
-  clearInterval(state.timerInterval);
-  state.timerSeconds = parseInt(ui.timerInput?.value, 10);
-  if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
-  ui.timerDisplay?.classList.remove("warning");
-  state.timerInterval = setInterval(() => {
-    state.timerSeconds -= 1;
-    if (ui.timerDisplay) ui.timerDisplay.textContent = `${state.timerSeconds}s`;
-    if (state.timerSeconds <= 5) {
-      ui.timerDisplay?.classList.add("warning");
-    }
-    if (state.timerSeconds <= 0) {
-      stopTimer();
-      moveCard(1);
-    }
-  }, 1000);
+  runCardTimer();
 }
 
 function switchMode(mode) {
@@ -768,6 +769,7 @@ function switchMode(mode) {
 }
 
 function moveCard(step) {
+  clearInterval(state.timerInterval);
   const active = getActiveIndexes();
   if (!active.length) return;
   ui.flipCard.classList.remove("is-flipped");
@@ -820,7 +822,9 @@ function renderStudyCard() {
     ui.flipAnswer.textContent = weak > 0 ? `${weak} weak card${weak > 1 ? "s" : ""} to review` : "Perfect score!";
     ui.studyMeta.textContent = "Well done!";
     ui.studyProgress.textContent = `${total} / ${total}`;
-    if (typeof confetti !== "undefined") {
+    const fill = document.getElementById("deckProgressFill");
+    if (fill) fill.style.width = "100%";
+    if (typeof confetti !== "undefined" && correct > 0) {
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
     }
     if (state.currentDeck.id && !String(state.currentDeck.id).startsWith("local-")) {
@@ -834,6 +838,11 @@ function renderStudyCard() {
   const weakCount = state.weakIndexes.size;
   ui.studyMeta.textContent = `Mode: ${state.currentMode.toUpperCase()} | Weak cards tracked: ${weakCount}`;
   ui.studyProgress.textContent = `Card ${state.currentIndex + 1} / ${active.length}`;
+  const fill = document.getElementById("deckProgressFill");
+  if (fill) {
+    const percent = active.length > 0 ? Math.round(((state.currentIndex) / active.length) * 100) : 0;
+    fill.style.width = `${percent}%`;
+  }
   ui.flipQuestion.textContent = card.question;
   ui.flipAnswer.textContent = card.answer;
   ui.quizQuestion.textContent = card.question;
@@ -1190,6 +1199,7 @@ function renderMcqOptions(card, wrongOptions) {
         state.weakIndexes.delete(state.currentIndex);
         setStatus(ui.mcqFeedback, "Correct!", "success");
       }
+      clearInterval(state.timerInterval);
     });
     ui.mcqOptions.appendChild(btn);
   });
@@ -1332,6 +1342,7 @@ function wireEventHandlers() {
     setStatus(ui.quizFeedback, "Not quite. Marked as a weak card.", "error");
   }
     ui.quizCorrectAnswer.textContent = `Correct answer: ${card.answer}`;
+    clearInterval(state.timerInterval);
     renderStudyCard();
   });
 
@@ -1344,6 +1355,7 @@ function wireEventHandlers() {
     state.weakIndexes.add(realIndex);
     setStatus(ui.quizFeedback, "Marked as weak card.", "error");
     ui.quizCorrectAnswer.textContent = `Correct answer: ${card.answer}`;
+    clearInterval(state.timerInterval);
     renderStudyCard();
   });
 }

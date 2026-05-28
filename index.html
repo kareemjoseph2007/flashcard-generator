@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kix</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -176,6 +178,9 @@
           <p id="studyMeta" class="muted"></p>
         </div>
         <div class="progress-pill" id="studyProgress">Card 1 / 1</div>
+        <div class="deck-progress-bar">
+          <div id="deckProgressFill" class="deck-progress-fill"></div>
+        </div>
       </div>
 
       <div class="study-controls">
@@ -193,6 +198,7 @@
       </div>
 
       <div id="timerDisplay" class="timer-display hidden"></div>
+      <p class="muted text-xs" style="text-align:center;margin-top:4px" id="timerLabel"></p>
 
       <div id="keyboardHint" class="keyboard-hint">
         <span>← → Navigate</span>
